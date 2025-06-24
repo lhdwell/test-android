@@ -1,40 +1,18 @@
-name: Android Emulator Test
-
-on: [workflow_dispatch]  # 手动触发
-
 jobs:
-  test-emulator:
-    runs-on: macos-latest  # 推荐使用 macOS 以获得最佳性能
-    
+  test:
+    runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Enable KVM group perms
-      run: |
-        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-        sudo udevadm control --reload-rules
-        sudo udevadm trigger --name-match=kvm
+      - name: checkout
+        uses: actions/checkout@v4
 
-    - name: Test Android Emulator
-      uses: reactivecircus/android-emulator-runner@v2.28.0
-      with:
-        api-level: 33
-        arch: x86_64
-        profile: Pixel 4
-        script: |
-          # 检查模拟器是否启动
-          adb devices
-          
-          # 获取设备信息
-          adb shell getprop ro.product.model
-          adb shell getprop ro.build.version.release
-          
-          # 简单验证模拟器功能
-          adb shell input keyevent 82  # 解锁屏幕
-          adb shell am start -a android.intent.action.VIEW -d "https://github.com"
-          
-          # 截图验证（可选）
-          adb exec-out screencap -p > screenshot.png
-          ls -la screenshot.png
-          
-          echo "✅ 安卓模拟器已成功启动并运行！"
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: run tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          script: ./gradlew connectedCheck
