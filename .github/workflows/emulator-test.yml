@@ -1,0 +1,35 @@
+name: Android Emulator Test
+
+on: [workflow_dispatch]  # 手动触发
+
+jobs:
+  test-emulator:
+    runs-on: macos-latest  # 推荐使用 macOS 以获得最佳性能
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Test Android Emulator
+      uses: reactivecircus/android-emulator-runner@v2.28.0
+      with:
+        api-level: 33
+        arch: x86_64
+        profile: Pixel 4
+        script: |
+          # 检查模拟器是否启动
+          adb devices
+          
+          # 获取设备信息
+          adb shell getprop ro.product.model
+          adb shell getprop ro.build.version.release
+          
+          # 简单验证模拟器功能
+          adb shell input keyevent 82  # 解锁屏幕
+          adb shell am start -a android.intent.action.VIEW -d "https://github.com"
+          
+          # 截图验证（可选）
+          adb exec-out screencap -p > screenshot.png
+          ls -la screenshot.png
+          
+          echo "✅ 安卓模拟器已成功启动并运行！"
